@@ -14,3 +14,5 @@ Los modelos se encuentran en main.py, son los siguientes:
 - Decision tree
 - Random forest
 - Logistic Regression
+
+Se probó con un conjunto de datos básico disponible en https://github.com/allisonhorst/palmerpenguins/raw/5b5891f01b52ae26ad8cb9755ec93672f49328a8/data/penguins_size.csv
