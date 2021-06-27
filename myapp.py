@@ -3,8 +3,11 @@
 import pandas as pd
 import umap
 import pickle
+from functools import partial
+from math import floor
 # ml
 from sklearn import tree
+from sklearn.datasets import load_digits
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -15,7 +18,6 @@ from bokeh.layouts import row
 from bokeh.models import CheckboxButtonGroup
 from bokeh.layouts import column, layout
 from bokeh.models import Button, Div, Spinner, TextInput
-from bokeh.palettes import RdYlBu3
 
 
 # Class
@@ -35,55 +37,43 @@ def load_csv(url):
     dataset = dataset.dropna()
     return dataset
 
-penguins = load_csv("https://github.com/allisonhorst/palmerpenguins/raw/5b5891f01b52ae26ad8cb9755ec93672f49328a8/data/penguins_size.csv")
-
 reducer = umap.UMAP()
 
-# Usar dataset de prueba con 4 atributos
-penguin_data = penguins[
-    [
-        "culmen_length_mm",
-        "culmen_depth_mm",
-        "flipper_length_mm",
-        "body_mass_g",
-    ]
-].values
+digits = load_digits()
 
-scaled_penguin_data = StandardScaler().fit_transform(penguin_data)
-species = [x for x in penguins.species_short.map({"Adelie": 0, "Chinstrap": 1, "Gentoo": 2})]
+Y = digits.target
+X = digits.data
+
+scaled_data = StandardScaler().fit_transform(X)
 
 # Datos entrenamiento
-X = scaled_penguin_data
-Y = species
-
-class_1 = []
-class_2 = []
-class_3 = []
+X = scaled_data
 
 # Separar en clases
-for i in range(len(species)):
-    if species[i] == 0:
-        class_1.append(scaled_penguin_data[i])
-    if species[i] == 1:
-        class_2.append(scaled_penguin_data[i])
-    if species[i] == 2:
-        class_3.append(scaled_penguin_data[i])
+j = 0
 
+classes = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: []}
+color_maps = {
+    0: "red", 1: "green", 2: "blue", 3: "brown", 4: "gray",
+    5: "cyan", 6: "indigo", 7: "LightBlue", 8: "PaleGreen", 9: "Peru"
+}
+
+for i in range(len(Y)):
+    classes[Y[i]].append(X[i])
+
+X_train = []
+Y_train = []
+X_test = []
+Y_test = []
 limit = 0.7
-class_1_train = class_1[0:int(len(class_1) * limit)]
-class_1_test = class_1[int(len(class_1) * limit):]
-
-class_2_train = class_2[0:int(len(class_2) * limit)]
-class_2_test = class_2[int(len(class_2) * limit):]
-
-class_3_train = class_3[0:int(len(class_3) * limit)]
-class_3_test = class_3[int(len(class_3) * limit):]
-
-X_train = class_1_train + class_2_train + class_3_train
-X_test = class_1_test + class_2_test + class_3_test
-
-Y_train = [0] * len(class_1_train) + [1] * len(class_2_train) + [2] * len(class_3_train)
-Y_test = [0] * len(class_1_test) + [1] * len(class_2_test) + [2] * len(class_3_test)
+for key, value in classes.items():
+    a = len(value) * limit
+    sub_X_train, sub_X_test = value[:floor(a)], value[floor(a):]
+    sub_Y_train, sub_Y_test = [key] * floor(a), [key] * (len(value) - floor(a))
+    X_train += sub_X_train
+    X_test += sub_X_test
+    Y_train += sub_Y_train
+    Y_test += sub_Y_test
 
 # Decision tree visualization
 decision_tree = tree.DecisionTreeClassifier()
@@ -125,7 +115,10 @@ print("Voting classifier")
 reducer = umap.UMAP()
 embedding = reducer.fit_transform(X_test)
 colors2 = Y_test
-color_maps = {0: "red", 1: "green", 2: "blue"}
+color_maps = {
+    0: "red", 1: "green", 2: "blue", 3: "brown", 4: "gray",
+    5: "cyan", 6: "indigo", 7: "LightBlue", 8: "PaleGreen", 9: "Peru"
+}
 
 plot1 = figure(plot_width=200, plot_height=200)
 plot1.title.text = "Decision Tree"
@@ -241,6 +234,8 @@ def update_ensemble_list():
 
 loading = False
 current_ensemble = MyEnsemble()
+comparison_ensemble = MyEnsemble()
+comparison_ensembles_row = row(children=[], align="center")
 ensemble_list_div.text = update_ensemble_list()
 
 # Widgets
@@ -253,10 +248,12 @@ spinner_dt = Spinner(title="D. Tree", low=1, high=40, step=0.5, value=1, width=8
 spinner_rf = Spinner(title="R. Forest", low=1, high=40, step=0.5, value=1, width=80, visible=False)
 spinner_lr = Spinner(title="L. Regression", low=1, high=40, step=0.5, value=1, width=80, visible=False)
 btn_weights = Button(label="Generar", button_type="success", visible=False)
-btn_save = Button(label="Guardar ensamble", button_type="success", disabled=True, width=80, align="center")
-btn_load = Button(label="Cargar ensamble", button_type="success", width=80, align="center")
-name_input = TextInput(value="untitled", title="Nombre:", disabled=True, width=160, align="center")
-load_input = TextInput(value="untitled", title="Nombre:", width=160, align="center")
+btn_save = Button(label="Guardar ensamble", button_type="success", disabled=True, width=100, align="center")
+btn_load = Button(label="Cargar ensamble", button_type="success", width=100, align="center")
+btn_comparison = Button(label="Cargar ensamble", button_type="success", width=100, align="center")
+name_input = TextInput(value="untitled", title="Nombre:", disabled=True, width=220, align="center")
+load_input = TextInput(value="untitled", title="Nombre:", width=220, align="center")
+comparison_input = TextInput(value="untitled", title="Nombre:", width=220, align="center")
 
 
 # Callbacks
@@ -363,114 +360,165 @@ def save_ensemble():
 
     ensemble_list_div.text = update_ensemble_list()
 
-    """
-    new_eclf = 123
-    with open('ensambles/' + name_input.value + '.pkl', 'rb') as input:
-        new_eclf = pickle.load(input)
-    print("loaded", new_eclf)
-    """
 
-
-def load_ensemble():
-    global current_ensemble
+def get_ensemble(input_object):
     global loading
+    destination = MyEnsemble()
     loading = True
-    with open('ensambles/' + load_input.value + '.pkl', 'rb') as abc:
+    with open('ensambles/' + input_object.value + '.pkl', 'rb') as abc:
         print("tmr: ", abc)
-        current_ensemble = pickle.load(abc)
+        destination = pickle.load(abc)
     print("loaded")
-    print(current_ensemble)
-    print(current_ensemble.eclf)
-    print(current_ensemble.names, len(current_ensemble.names))
-    print(current_ensemble.weights)
-    print(current_ensemble.name)
-    print(current_ensemble.success)
-    print(current_ensemble.total)
+    print(destination)
+    print(destination.eclf)
+    print(destination.names, len(destination.names))
+    print(destination.weights)
+    print(destination.name)
+    print(destination.success)
+    print(destination.total)
+    return destination
+
+
+def update_ensemble_view():
+    destination = get_ensemble(load_input)
 
     new_check_group = []
-    if "dt" not in current_ensemble.names:
+    if "dt" not in destination.names:
         spinner_dt.visible = False
     else:
         spinner_dt.visible = True
-        weight_index = current_ensemble.names.index("dt")
-        spinner_dt.value = current_ensemble.weights[weight_index]
+        weight_index = destination.names.index("dt")
+        spinner_dt.value = destination.weights[weight_index]
         new_check_group.append(0)
 
-    if "rf" not in current_ensemble.names:
+    if "rf" not in destination.names:
         spinner_rf.visible = False
     else:
         spinner_rf.visible = True
-        weight_index = current_ensemble.names.index("rf")
-        spinner_rf.value = current_ensemble.weights[weight_index]
+        weight_index = destination.names.index("rf")
+        spinner_rf.value = destination.weights[weight_index]
         new_check_group.append(1)
 
-    if "lr" not in current_ensemble.names:
-        print("LR NOT IN NAMES")
+    if "lr" not in destination.names:
         spinner_lr.visible = False
     else:
-        print("LR IN NAMES")
         spinner_lr.visible = True
-        print("STEP 1")
-        weight_index = current_ensemble.names.index("lr")
-        print("STEP 2")
-        spinner_lr.value = current_ensemble.weights[weight_index]
-        print("STEP 3")
+        weight_index = destination.names.index("lr")
+        spinner_lr.value = destination.weights[weight_index]
         new_check_group.append(2)
-        print("STEP 4")
-        print("DONE")
 
-    print("LR ", spinner_lr)
-    print("LR ", spinner_lr.visible)
-    print("LR ", spinner_lr.value)
     checkbox_button_group.active = new_check_group
-    print("CB", checkbox_button_group)
-    print("CB", checkbox_button_group.active)
+    new_text = "<p> " + str(destination.success) + " correctos de " + str(destination.total) + "</p>"
+    results_ensemble.text = new_text
+
+    global current_ensemble
+    current_ensemble = destination
+    print("current_ensemble")
+    print(current_ensemble)
+    print(current_ensemble.name)
+    print(current_ensemble.names)
+    print(current_ensemble.success, current_ensemble.total)
+    print(current_ensemble.weights)
+    return destination
+
+
+def update_comparison_view():
+    global comparison_ensemble
+    comparison_ensemble = get_ensemble(comparison_input)
+    print("loading ensemble for comparison")
+    print(comparison_ensemble)
+    print(comparison_ensemble.eclf)
+    print(comparison_ensemble.name)
+    print(comparison_ensemble.names)
+    print(comparison_ensemble.weights)
+    new_plot = figure(plot_width=200, plot_height=200)
+    new_plot.title.text = comparison_ensemble.name
+
+    comparison_output = Div(align="center")
+    comparison_output.text = "<p> Modelos: " + ','.join(comparison_ensemble.names) + "<br>" + \
+                             str(comparison_ensemble.success) + ", " + str(comparison_ensemble.total) + "</p>"
+
+    comparison_ensembles_row.children.append(
+        column(
+            children=[
+                new_plot,
+                comparison_output
+            ]
+        )
+    )
+
+
+def get_ensemble_handler(destination):
+    if destination == "current":
+        update_ensemble_view()
+    if destination == "comparison":
+        update_comparison_view()
 
 checkbox_button_group.on_change("active", call_back)
 btn_weights.on_click(make_ensemble)
 btn_save.on_click(save_ensemble)
-btn_load.on_click(load_ensemble)
-
+btn_load.on_click(
+    partial(get_ensemble_handler, destination="current")
+)
+btn_comparison.on_click(
+    partial(get_ensemble_handler, destination="comparison")
+)
 # Main
-curdoc().add_root(layout([
+curdoc().add_root(layout(children=[
     [
+        # Generar ensambles
         column(
-            title_models,
-            row(
-                column(plot1, gen_div(success_list[0], total)),
-                column(plot2, gen_div(success_list[1], total)),
-            ),
-            row(
-                column(plot3, gen_div(success_list[2], total)),
-                column(plot3, gen_div(success_list[2], total)),
-            ),
-        ),
-        column(
-            title_ensemble,
-            Div(text="<p>Modelos a usar: </p>", align="center"),
-            checkbox_button_group,
-            Div(text="<p>Pesos: </p>", align="center"),
-            row(spinner_dt, spinner_rf, spinner_lr),
-            btn_weights,
-            column(plot_ensemble),
-            results_ensemble
-        ),
-        column(
-            title_control,
             row(
                 column(
-                    Div(text="<p>Ensamble actual: </p>", align="center"),
-                    name_input,
-                    btn_save
+                    title_models,
+                    row(
+                        column(plot1, gen_div(success_list[0], total)),
+                        column(plot2, gen_div(success_list[1], total)),
+                    ),
+                    row(
+                        column(plot3, gen_div(success_list[2], total)),
+                        column(plot3, gen_div(success_list[2], total)),
+                    ),
                 ),
                 column(
-                    Div(text="<p>Cargar ensamble: </p>", align="center"),
-                    load_input,
-                    btn_load
+                    title_ensemble,
+                    Div(text="<p>Modelos a usar: </p>", align="center"),
+                    checkbox_button_group,
+                    Div(text="<p>Pesos: </p>", align="center"),
+                    row(spinner_dt, spinner_rf, spinner_lr),
+                    btn_weights,
+                    column(plot_ensemble),
+                    results_ensemble
+                ),
+                column(
+                    title_control,
+                    row(
+                        column(
+                            Div(text="<p>Ensamble actual: </p>", align="center"),
+                            name_input,
+                            btn_save
+                        ),
+                        column(
+                            Div(text="<p>Cargar ensamble: </p>", align="center"),
+                            load_input,
+                            btn_load
+                        )
+                    ),
+                    Div(text="<p>Lista ensambles: </p>", align="center"),
+                    ensemble_list_div
                 )
             ),
-            Div(text="<p>Lista ensambles: </p>", align="center"),
-            ensemble_list_div
+            # Cargar ensambles
+            column(
+                children=[
+                    Div(text="<h2> Comparar ensambles </h2>", align="center"),
+                    row(
+                        children=[
+                            comparison_input, btn_comparison
+                        ], align="center"),
+                    comparison_ensembles_row
+                ], align="center"
+            )
         )
-    ]
-]))
+    ],
+], width_policy="fit"))
