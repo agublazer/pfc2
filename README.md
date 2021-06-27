@@ -18,5 +18,5 @@ El framework esta completado al 80%, sólo falta realizar lo siguiente:
 2. Agregar metricas mas complejas para dar mas informacion
 3. Graficar los limites de decision de los modelos
 
-![alt text](https://github.com/agublazer/pfc2/blob/master/main1.jpg?raw=true)
-![alt text](https://github.com/agublazer/pfc2/blob/master/main2.jpg?raw=true)
+![alt text](https://github.com/agublazer/pfc2/blob/master/main1.png?raw=true)
+![alt text](https://github.com/agublazer/pfc2/blob/master/main2.png?raw=true)
