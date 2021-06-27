@@ -3,16 +3,20 @@
 Esta herramienta permitirá la generación de ensambles de clasificadores de forma interactiva
 Se usó umap para la reducción de dimensionalidad. Esto se hace para las visualizaciones, no para el entrenamiento
 
-## Primero se visualiza con matplotlib
+Esta herramienta permite crear ensambles, modificarlos, asignar pesos, guardarlos, cargarlos, ver las métricas
+de cada modelo y ensamble, compararlos y ver las gráficas de los modelos.
 
-![Matplotlib](/matplotlib.jpg)
-
-## Se creó una visualización interactiva con Bokeh de python
-![Bokeh](/bokeh.jpg)
-
-Los modelos se encuentran en main.py, son los siguientes:
+Los modelos son los siguientes:
 - Decision tree
 - Random forest
 - Logistic Regression
 
-Se probó con un conjunto de datos básico disponible en https://github.com/allisonhorst/palmerpenguins/raw/5b5891f01b52ae26ad8cb9755ec93672f49328a8/data/penguins_size.csv
+Se usa el conjunto de datos de digits, ya que es usado tambien por el trabajo que deseamos mejorar https://www.sciencedirect.com/science/article/abs/pii/S0097849319301402?via%3Dihub
+
+El framework esta completado al 80%, sólo falta realizar lo siguiente:
+1. Agregar mas modelos que puedan ser incluidos en los ensambles
+2. Agregar metricas mas complejas para dar mas informacion
+3. Graficar los limites de decision de los modelos
+
+![alt text](https://github.com/agublazer/pfc2/blob/master/main1.jpg?raw=true)
+![alt text](https://github.com/agublazer/pfc2/blob/master/main2.jpg?raw=true)
